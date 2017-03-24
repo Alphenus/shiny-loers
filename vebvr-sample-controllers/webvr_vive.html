@@ -71,13 +71,19 @@
 				scene.add( camera );
 
 				room = new THREE.Mesh(
-					new THREE.BoxGeometry( 6, 6, 6, 8, 8, 8 ),
-					new THREE.MeshBasicMaterial( { color: 0x404040, wireframe: true } )
+					new THREE.BoxGeometry( 6, 6, 6, 8, 8, 8 )
+					// ,
+					//new THREE.MeshBasicMaterial( { color: 0x404040, wireframe: true } )
+					//new THREE.MeshBasicMaterial( { color: 0x404040 } )
+					//new THREE.MeshBasicMaterial( { color: 0xFF0000 } )
 				);
-				room.position.y = 3;
+				
+				//room.position.y = 3;
+				
 				scene.add( room );
 
-				scene.add( new THREE.HemisphereLight( 0x606060, 0x404040 ) );
+				//scene.add( new THREE.HemisphereLight( 0x606060, 0x404040 ) );
+				scene.add( new THREE.HemisphereLight( 0x606060, 0xFF4040 ) );
 
 				var light = new THREE.DirectionalLight( 0xffffff );
 				light.position.set( 1, 1, 1 ).normalize();
@@ -85,44 +91,38 @@
 
 				var geometry = new THREE.BoxGeometry( 0.2, 0.2, 0.2 );
 
-				for ( var i = 0; i < 200; i ++ ) {
+				var torus = new THREE.Mesh(
+					new THREE.TorusGeometry(
+						1.0 / 2, // radius (in m)
+						1.1 / 100, // diameter of tube
+						16, // no. of radial segments
+						128 // no. of tubular segments
+					),
+					new THREE.MeshBasicMaterial( { color: 0xffa3fd } )
+				);
+				
+				//torus.position.y = -3;
+				torus.position.y = 1.1;
+				torus.rotation.x = Math.PI / 2;
+				
+				room.add(torus);
+				
+				/*
+				var unitCube = new THREE.Mesh(
+					new THREE.BoxGeometry (1, 1, 1),
+					new THREE.MeshLambertMaterial( {color: 0xffffff})
+				)
+				
+				unitCube.position.y = -3
+				
+				room.add(unitCube);
+				*/
 
-					var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
-
-					object.position.x = Math.random() * 4 - 2;
-					object.position.y = Math.random() * 4 - 2;
-					object.position.z = Math.random() * 4 - 2;
-
-					object.rotation.x = Math.random() * 2 * Math.PI;
-					object.rotation.y = Math.random() * 2 * Math.PI;
-					object.rotation.z = Math.random() * 2 * Math.PI;
-
-					object.scale.x = Math.random() + 0.5;
-					object.scale.y = Math.random() + 0.5;
-					object.scale.z = Math.random() + 0.5;
-
-					object.userData.velocity = new THREE.Vector3();
-					object.userData.velocity.x = Math.random() * 0.01 - 0.005;
-					object.userData.velocity.y = Math.random() * 0.01 - 0.005;
-					object.userData.velocity.z = Math.random() * 0.01 - 0.005;
-
-					room.add( object );
-
-				}
-
+				
 				var material = new THREE.MeshStandardMaterial();
 
 				var loader = new THREE.CubeTextureLoader();
 				
-				loader.setPath( 'textures/cube/pisa/' );
-				material.envMap = loader.load( [
-					"px.png", "nx.png",
-					"py.png", "ny.png",
-					"pz.png", "nz.png"
-				] );
-
-				//
-
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setClearColor( 0x505050 );
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -142,7 +142,7 @@
 				controller2 = new THREE.ViveController( 1 );
 				controller2.standingMatrix = controls.getStandingMatrix();
 				scene.add( controller2 );
-
+				
 				var loader = new THREE.OBJLoader();
 				loader.setPath( 'models/obj/vive-controller/' );
 				loader.load( 'vr_controller_vive_1_5.obj', function ( object ) {
@@ -200,6 +200,9 @@
 
 				controls.update();
 
+				// cube rotation -- disabled for now
+				
+				/*
 				for ( var i = 0; i < room.children.length; i ++ ) {
 
 					var cube = room.children[ i ];
@@ -230,8 +233,10 @@
 					}
 
 					cube.rotation.x += 0.01 * delta;
-
 				}
+				
+				*/
+
 
 				effect.render( scene, camera );
 
