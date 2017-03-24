@@ -20,7 +20,7 @@
         initThree();
         var rimPosition = new CANNON.Vec3(1.5,0,0);
         var impulse = new CANNON.Vec3(1,0,0);
-        //hoopBody.applyImpulse(impulse, rimPosition);
+        hoopBody.applyImpulse(impulse, rimPosition);
         animate();
 
         function initCannon() {
@@ -39,12 +39,12 @@
             cylRad = 1;
             cylH = 5;
             var qCyl = new CANNON.Quaternion();
-            qCyl.setFromAxisAngle(new Vec3(1,0,0), Math.PI / 2)
+            var larae = qCyl.setFromAxisAngle(new Vec3(1,0,0), Math.PI / 2)
             var cylShape = new CANNON.Cylinder(cylRad,cylRad,cylH,10);
-            //cylShape.transformAllPoints(new Vec3(),qCyl);
-            cylBody = new CANNON.Body({ mass:cylMass});
-            cylBody.addShape(cylShape);
-            cylBody.position.set(0,0,1);
+            var loers = cylShape.transformAllPoints(new Vec3(),larae);
+            cylBody = new CANNON.Body({ mass:cylMass, shape:loers});
+            //cylBody.addShape(cylShape);
+            cylBody.position.set(0,0,cylH / 2);
             world.add(cylBody);
 
 
@@ -57,8 +57,8 @@
             qHoop.setFromAxisAngle(new Vec3(1,0,0), Math.PI / 2);
             var hoopShape = new CANNON.Trimesh.createTorus(hoopRad,hoopTube,10,6);
             //hoopShape.transformAllPoints(new Vec3(),qHoop);
-            hoopBody = new CANNON.Body({ mass:hoopMass, shape:hoopShape, quaternion:qHoop});
-            hoopBody.position.set(0,0,2.5);
+            hoopBody = new CANNON.Body({ mass:hoopMass, shape:hoopShape });
+            hoopBody.position.set(0,0,1);
             //hoopBody.angularVelocity.set(0,10,0);
             world.add(hoopBody);
             /*
@@ -83,8 +83,13 @@
         function initThree() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 100 );
-            camera.position.z = 5;
-            camera.position.y = 1;
+            camera.position.x = 3;
+            camera.position.y = 3;
+            camera.position.z = 3;
+
+            camera.rotation.x = -45 * Math.PI / 180;
+            camera.rotation.y = 45 * Math.PI / 180;
+            camera.rotation.z = (150) * Math.PI / 180;
             scene.add( camera );
 
             cylGeometry = new THREE.CylinderGeometry( cylRad, cylRad, cylH, 32 );
@@ -125,7 +130,7 @@
               cylMesh.position.copy(cylBody.position);
               hoopMesh.position.copy(hoopBody.position);
               hoopMesh.quaternion.copy(hoopBody.quaternion);
-              console.log("hoop angular velocity: " + hoopBody.angularVelocity);
+            //  console.log("hoop angular velocity: " + hoopBody.angularVelocity);
           }
           function render() {
               renderer.render( scene, camera );
