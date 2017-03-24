@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Making Lörs Lärä Again</title>
+        <style>
+        </style>
+
+    </head>
+    <body>
+
+        <script src="libs/cannon.js"></script>
+        <script src="libs/three.min.js"></script>
+
+        <script>
+
+        var world, timeStep=1/60, camera, scene, renderer; // world related vars
+        var ballRadius, ballMass, ballBody, groundBody; // physics related vars
+        var ballMesh, planeMesh; // drawing related vars;
+
+        initThree();
+        initCannon();
+        animate();
+
+        function initCannon() {
+            world = new CANNON.World();
+            world.gravity.set(0,0,0);
+            world.broadphase = new CANNON.NaiveBroadphase();
+
+            //Create sphere for physics
+            ballMass = 5;
+            ballRadius = 1;
+            var ballShape = new CANNON.Sphere(ballRadius);
+            ballBody = new CANNON.Body({mass:ballMass, shape:ballShape});
+            ballBody.position.set(0,0,0.5);
+            world.add(ballBody)
+
+            //Create Plane for physics
+            var groundShape = new CANNON.Plane();
+            groundBody = new CANNON.Body({ mass: 0, shape: groundShape});
+            world.add(groundBody);
+        }
+
+        function initThree() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 100 );
+
+            camera.position.x = 3;
+            camera.position.y = 3;
+            camera.position.z = 3;
+
+            camera.rotation.x = -45 * Math.PI / 180;
+            camera.rotation.y = 45 * Math.PI / 180;
+            camera.rotation.z = (150) * Math.PI / 180;
+
+
+            var axisHelper = new THREE.AxisHelper(3);
+            scene.add(axisHelper);
+
+            ballMaterial = new THREE.MeshBasicMaterial( { color: 0xccffff/*, wireframe: true */} );
+            material = new THREE.MeshBasicMaterial( { color: 0xcc5555/*, wireframe: true */} );
+
+            // Create sphere for drawing
+            var ballGeometry = new THREE.SphereGeometry( ballRadius, 32, 32 );
+            ballMesh = new THREE.Mesh( ballGeometry, ballMaterial );
+
+            // Create plane for drawing
+            var planeGeometry = new THREE.PlaneGeometry( 2, 2, 32 );
+            planeMesh = new THREE.Mesh(planeGeometry, material);
+
+            scene.add(ballMesh);
+            scene.add(planeMesh);
+
+            renderer = new THREE.WebGLRenderer();
+
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            document.body.appendChild( renderer.domElement );
+
+        }
+
+        function animate() {
+            requestAnimationFrame( animate );
+            updatePhysics();
+            render();
+        }
+
+        function updatePhysics() {
+            // Step the physics world
+            world.step(timeStep);
+            console.log(ballBody.position.x, ballBody.position.y, ballBody.position.z)
+            // Copy coordinates from Cannon.js to Three.js
+            ballMesh.position.copy(ballBody.position);
+        }
+
+        function render() {
+            renderer.render( scene, camera );
+        }
+
+        </script>
+
+
+    </body>
+</html>
