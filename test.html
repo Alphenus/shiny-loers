@@ -16,7 +16,7 @@
         world.broadphase = new CANNON.NaiveBroadphase();
 
         // create a sphere
-        var mass, radius = 1;
+        var mass = 5, radius = 1;
         var sphereShape = new CANNON.Sphere(radius);
         var sphereBody = new CANNON.Body({mass:mass, shape:sphereShape});
         sphereBody.position.set(0,0,0);
@@ -31,15 +31,15 @@
         // let sphere fall
         for (var i = 0; i < 60; ++i){
           world.step(timeStep);
-          CANNON.console.log(sphereBody.position.x,sphereBody.position.y,sphereBody.z);
+          console.log(sphereBody.position.x,sphereBody.position.y,sphereBody.position.z);
         }
         // add impulse
-        document.write("adding impulse");
+        console.log("adding impulse")
         var imp = new CANNON.Vec3(1,0,0);
-        sphereBody.applyImpulse(imp);
+        sphereBody.applyImpulse(imp,sphereBody.position);
         for (var i = 0; i < 10; ++i){
-          world.step(timeStep)
-          CANNON.console.log(sphereBody.position.x,sphereBody.position.y,sphereBody.z);
+          world.step(timeStep);
+          console.log(sphereBody.position.x,sphereBody.position.y,sphereBody.position.z);
         }
         </script>
 
