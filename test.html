@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Making Lörs Lärä Again</title>
+        <style>
+        </style>
+
+    </head>
+    <body>
+
+        <script src="libs/cannon.js"></script>
+        <script>
+        var world = new CANNON.World();
+        world.gravity.set(0,0,-9.82);
+        world.broadphase = new CANNON.NaiveBroadphase();
+
+        // create a sphere
+        var mass, radius = 1;
+        var sphereShape = new CANNON.Sphere(radius);
+        var sphereBody = new CANNON.Body({mass:mass, shape:sphereShape});
+        sphereBody.position.set(0,0,0);
+        world.add(sphereBody)
+
+        // create base plane
+
+        var groundShape = new CANNON.Plane();
+        var groundBody = new CANNON.Body({ mass: 0, shape: groundShape});
+        world.add(groundBody);
+
+        var timeStep = 1.0 / 60.0; // seconds
+        // let sphere fall
+        for (var i = 0; i < 60; ++i){
+          world.step(timeStep);
+          console.log(sphereBody.position.x,sphereBody.position.y,sphereBody.z);
+        }
+        // add impulse
+        document.write("adding impulse")
+        sphereBody.addImpulse(new Vec3(10,0,0))
+        for (var i = 0; i < 10; ++i){
+          world.step(timeStep)
+          console.log(sphereBody.position.x,sphereBody.position.y,sphereBody.z);
+        }
+        </script>
+
+
+    </body>
+</html>
