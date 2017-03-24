@@ -20,7 +20,7 @@
         initThree();
         var rimPosition = new CANNON.Vec3(1.5,0,0);
         var impulse = new CANNON.Vec3(1,0,0);
-        hoopBody.applyImpulse(impulse, rimPosition);
+        //hoopBody.applyImpulse(impulse, rimPosition);
         animate();
 
         function initCannon() {
@@ -52,9 +52,10 @@
             // create a hoop
             var hoopMass = 1;
             hoopRad = 1.5;
+            hoopTube = 0.1;
             var qHoop = new CANNON.Quaternion();
             qHoop.setFromAxisAngle(new Vec3(1,0,0), Math.PI / 2);
-            var hoopShape = new CANNON.Trimesh.createTorus(hoopRad,0.01,10,6);
+            var hoopShape = new CANNON.Trimesh.createTorus(hoopRad,hoopTube,10,6);
             //hoopShape.transformAllPoints(new Vec3(),qHoop);
             hoopBody = new CANNON.Body({ mass:hoopMass, shape:hoopShape, quaternion:qHoop});
             hoopBody.position.set(0,0,2.5);
@@ -86,15 +87,18 @@
             camera.position.y = 1;
             scene.add( camera );
 
-            cylGeometry = new THREE.CylinderGeometry( 0.5, 0.5, 1, 32 );
-            torGeometry = new THREE.TorusGeometry( 0.5, 1/10, 16, 128 );
+            cylGeometry = new THREE.CylinderGeometry( cylRad, cylRad, cylH, 32 );
+            torGeometry = new THREE.TorusGeometry( hoopRad, hoopTube, 16, 128 );
+            planeGeometry = new THREE.PlaneGeometry( 2, 2, 32, 32);
             material = new THREE.MeshBasicMaterial( { color: 0xcc5555, wireframe: true } );
 
             cylMesh = new THREE.Mesh( cylGeometry, material );
             hoopMesh = new THREE.Mesh( torGeometry, material );
+            planeMesh = new THREE.Mesh( planeGeometry, material );
 
             scene.add( cylMesh );
             scene.add( hoopMesh );
+            scene.add( planeMesh )
 
             var axisHelper = new THREE.AxisHelper(5);
             scene.add(axisHelper);
