@@ -112,45 +112,8 @@
 
 				var material = new THREE.MeshStandardMaterial();
 
-				var loader = new THREE.OBJLoader();
-				loader.setPath( 'models/obj/cerberus/' );
-				loader.load( 'Cerberus.obj', function ( group ) {
-
-					// var material = new THREE.MeshBasicMaterial( { wireframe: true } );
-
-					var loader = new THREE.TextureLoader();
-					loader.setPath( 'models/obj/cerberus/' );
-
-					material.roughness = 1;
-					material.metalness = 1;
-
-					material.map = loader.load( 'Cerberus_A.jpg' );
-					material.roughnessMap = loader.load( 'Cerberus_R.jpg' );
-					material.metalnessMap = loader.load( 'Cerberus_M.jpg' );
-					material.normalMap = loader.load( 'Cerberus_N.jpg' );
-
-					material.map.wrapS = THREE.RepeatWrapping;
-					material.roughnessMap.wrapS = THREE.RepeatWrapping;
-					material.metalnessMap.wrapS = THREE.RepeatWrapping;
-					material.normalMap.wrapS = THREE.RepeatWrapping;
-
-					group.traverse( function ( child ) {
-
-						if ( child instanceof THREE.Mesh ) {
-
-							child.material = material;
-
-						}
-
-					} );
-
-					group.position.y = - 2;
-					group.rotation.y = - Math.PI / 2;
-					room.add( group );
-
-				} );
-
 				var loader = new THREE.CubeTextureLoader();
+				
 				loader.setPath( 'textures/cube/pisa/' );
 				material.envMap = loader.load( [
 					"px.png", "nx.png",
