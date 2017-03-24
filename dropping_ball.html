@@ -18,36 +18,37 @@
         var ballRadius, ballMass, ballBody, groundBody; // physics related vars
         var ballMesh, planeMesh; // drawing related vars;
 
-        initThree();
         initCannon();
+        initThree();
         animate();
 
         function initCannon() {
             world = new CANNON.World();
-            world.gravity.set(0,0,0);
+            world.gravity.set(0,0,-9.81);
             world.broadphase = new CANNON.NaiveBroadphase();
-
             //Create sphere for physics
             ballMass = 5;
             ballRadius = 1;
             var ballShape = new CANNON.Sphere(ballRadius);
             ballBody = new CANNON.Body({mass:ballMass, shape:ballShape});
-            ballBody.position.set(0,0,0.5);
+            ballBody.position.set(0,0,10);
             world.add(ballBody)
 
             //Create Plane for physics
             var groundShape = new CANNON.Plane();
             groundBody = new CANNON.Body({ mass: 0, shape: groundShape});
+            groundBody.position.set(0,0,0);
+
             world.add(groundBody);
         }
 
         function initThree() {
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 100 );
-
-            camera.position.x = 3;
-            camera.position.y = 3;
-            camera.position.z = 3;
+            camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
+            var campos = 10;
+            camera.position.x = campos;
+            camera.position.y = campos;
+            camera.position.z = campos;
 
             camera.rotation.x = -45 * Math.PI / 180;
             camera.rotation.y = 45 * Math.PI / 180;
@@ -65,7 +66,7 @@
             ballMesh = new THREE.Mesh( ballGeometry, ballMaterial );
 
             // Create plane for drawing
-            var planeGeometry = new THREE.PlaneGeometry( 2, 2, 32 );
+            var planeGeometry = new THREE.PlaneGeometry( 10, 10, 32 );
             planeMesh = new THREE.Mesh(planeGeometry, material);
 
             scene.add(ballMesh);
