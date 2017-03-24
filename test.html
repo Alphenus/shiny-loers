@@ -23,7 +23,6 @@
         world.add(sphereBody)
 
         // create base plane
-
         var groundShape = new CANNON.Plane();
         var groundBody = new CANNON.Body({ mass: 0, shape: groundShape});
         world.add(groundBody);
@@ -32,14 +31,15 @@
         // let sphere fall
         for (var i = 0; i < 60; ++i){
           world.step(timeStep);
-          console.log(sphereBody.position.x,sphereBody.position.y,sphereBody.z);
+          CANNON.console.log(sphereBody.position.x,sphereBody.position.y,sphereBody.z);
         }
         // add impulse
-        document.write("adding impulse")
-        sphereBody.addImpulse(new Vec3(10,0,0))
+        document.write("adding impulse");
+        var imp = new CANNON.Vec3(1,0,0);
+        sphereBody.applyImpulse(imp);
         for (var i = 0; i < 10; ++i){
           world.step(timeStep)
-          console.log(sphereBody.position.x,sphereBody.position.y,sphereBody.z);
+          CANNON.console.log(sphereBody.position.x,sphereBody.position.y,sphereBody.z);
         }
         </script>
 
