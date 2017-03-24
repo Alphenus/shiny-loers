@@ -42,7 +42,7 @@
             cylBody = new CANNON.Body({ mass:cylMass});
             cylBody.addShape(cylShape);
             cylBody.position.set(0,0,1);
-            world.add(cylBody)
+            world.add(cylBody);
 
 
 
@@ -91,6 +91,9 @@
 
             scene.add( cylMesh );
             scene.add( hoopMesh );
+
+            var axisHelper = new THREE.AxisHelper(5);
+            scene.add(axisHelper);
 
             renderer = new THREE.WebGLRenderer();
 
