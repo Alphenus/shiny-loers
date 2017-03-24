@@ -133,7 +133,20 @@
 				*/
 
 				
-				scene.add(new THREE.AxisHelper(1));
+				var cylinder = new THREE.Mesh(
+					new THREE.CylinderGeometry( 
+						0.35 / 2, 0.35 / 2, // radiustop, radiusbottom
+						1, // height
+						64 // radiusSegments
+					),
+					new THREE.MeshBasicMaterial( {color: 0xababab , opacity : 0.5, transparent: true})
+				) 
+				
+				cylinder.position.y = 1;
+				
+				room.add(cylinder);
+				
+				room.add(new THREE.AxisHelper(1));
 				
 				
 				scene.background = new THREE.Color(0x77cdff);
@@ -236,14 +249,28 @@
 				torus = torus[0];
 				//torus.applyMatrix(controller1.getStandingMatrix());
 				//torus.
+				/*
 				torus.setRotationFromQuaternion(
 					(new THREE.Quaternion).fromArray(
 					controller1.getGamepad().pose.orientation
 					)
 				);
+				*/
+				
+				cylinder = room.children.filter(function(c) {
+					return c.geometry instanceof THREE.CylinderGeometry
+				})[0];
+				
+				var p = controller1.getWorldPosition();
+				cylinder.position.x = p.x;
+				cylinder.position.z = p.z;
+				cylinder.position.y = p.y;
+				
+				var v = controller1.getWorldDirection();
+				var y = new THREE.Vector3(0, 1, 0);
+				cylinder.quaternion.setFromUnitVectors(y, v.clone().normalize());
 				
 				
-
 				// cube rotation -- disabled for now
 				
 				/*
@@ -287,5 +314,6 @@
 			}
 
 		</script>
+	
 	</body>
 </html>
