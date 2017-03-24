@@ -14,11 +14,11 @@
         var Vec3 = CANNON.Vec3
         // create world
         var world = new CANNON.World();
-        world.gravity.set(0,0,-9.82);
+        world.gravity.set(0,0,0);
         world.broadphase = new CANNON.NaiveBroadphase();
 
         // create a cylinder
-        var cylMass = 5, cylRad = 1;
+        var cylMass = 10, cylRad = 1;
         var qCyl = new CANNON.Quaternion();
         qCyl.setFromAxisAngle(new Vec3(1,0,0), Math.PI / 2)
         var cylShape = new CANNON.Cylinder(cylRad,cylRad,5,10);
@@ -29,7 +29,7 @@
         world.add(cylBody)
 
         // create a hoop
-        var hoopMass = 0.01, hoopRad = 1.5;
+        var hoopMass = 1, hoopRad = 1.5;
         var qHoop = new CANNON.Quaternion();
         qHoop.setFromAxisAngle(new Vec3(1,0,0), Math.PI / 2);
         var hoopShape = new CANNON.Trimesh.createTorus(hoopRad,0.1,10,6);
@@ -56,7 +56,7 @@
         var timeStep = 1.0 / 60.0; // seconds
         // make hoop spin
         var rimPosition = new Vec3(1.5,0,0)
-        var impulse = new Vec3(0.1,0,0)
+        var impulse = new Vec3(0,1,0)
         hoopBody.applyImpulse(impulse,rimPosition)
         // let both fall
         for (var i = 0; i < 60; ++i){
