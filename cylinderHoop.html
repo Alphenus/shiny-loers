@@ -19,7 +19,10 @@
 
         // create a cylinder
         var cylMass = 5, cylRad = 1;
+        var q = new CANNON.Quaternion();
+        q.setFromAxisAngle(new Vec3(1,0,0), Math.PI / 2)
         var cylShape = new CANNON.Cylinder(cylRad,cylRad,5,10);
+        cylShape.transformAllPoints(new Vec3(),q);
         var cylBody = new CANNON.Body({ mass:cylMass});
         cylBody.addShape(cylShape);
         cylBody.position.set(0,0,1);
