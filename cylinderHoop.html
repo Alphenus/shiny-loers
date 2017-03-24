@@ -28,6 +28,10 @@
             world = new CANNON.World();
             world.gravity.set(0,0,0);
             world.broadphase = new CANNON.NaiveBroadphase();
+            world.solver.iterations = 17;
+            world.defaultContactMaterial.contactEquationStiffness = 1e6;
+            world.defaultContactMaterial.contactEquationRelaxation = 3;
+            world.defaultContactMaterial.friction = 0.3;
 
             // create a cylinder
             var cylMass = 10, cylRad = 1;
@@ -52,7 +56,7 @@
             hoopBody.position.set(0,0,2.5);
             //hoopBody.angularVelocity.set(0,10,0);
             world.add(hoopBody);
-
+            /*
             // add friction between cylinder and hoop
             hoopMat = new CANNON.Material("hoopMat");
             cylMat = new CANNON.Material("cylMat");
@@ -62,7 +66,7 @@
                 contactEquationStiffness: 1000
               });
             world.addMaterial(hoopCylContactMaterial);
-
+            */
 
 
             // create base plane
