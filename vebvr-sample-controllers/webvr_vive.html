@@ -48,6 +48,7 @@
 			var room;
 
 			init();
+			
 			animate();
 
 			function init() {
@@ -83,7 +84,7 @@
 				scene.add( room );
 
 				//scene.add( new THREE.HemisphereLight( 0x606060, 0x404040 ) );
-				scene.add( new THREE.HemisphereLight( 0x606060, 0xFF4040 ) );
+				scene.add( new THREE.HemisphereLight( 0x606060, 0x404040 ) );
 
 				var light = new THREE.DirectionalLight( 0xffffff );
 				light.position.set( 1, 1, 1 ).normalize();
@@ -91,6 +92,14 @@
 
 				var geometry = new THREE.BoxGeometry( 0.2, 0.2, 0.2 );
 
+				// see:
+				// https://threejs.org/docs/api/textures/Texture.html
+				// https://solutiondesign.com/blog/-/blogs/webgl-and-three-js-texture-mappi-1/
+				var torusTex = new THREE.TextureLoader().load("hula-tex.png");
+				torusTex.wrapS = THREE.RepeatWrapping;
+				torusTex.wrapT = THREE.RepeatWrapping;
+				torusTex.repeat.set(4,4);
+				
 				var torus = new THREE.Mesh(
 					new THREE.TorusGeometry(
 						1.0 / 2, // radius (in m)
@@ -98,7 +107,10 @@
 						16, // no. of radial segments
 						128 // no. of tubular segments
 					),
-					new THREE.MeshBasicMaterial( { color: 0xffa3fd } )
+					new THREE.MeshBasicMaterial(
+						//{ color: 0xffa3fd }
+						{ map: torusTex }
+					)
 				);
 				
 				//torus.position.y = -3;
@@ -106,6 +118,8 @@
 				torus.rotation.x = Math.PI / 2;
 				
 				room.add(torus);
+				
+				//console.log(torus);
 				
 				/*
 				var unitCube = new THREE.Mesh(
@@ -118,6 +132,11 @@
 				room.add(unitCube);
 				*/
 
+				
+				scene.add(new THREE.AxisHelper(1));
+				
+				
+				scene.background = new THREE.Color(0x77cdff);
 				
 				var material = new THREE.MeshStandardMaterial();
 
@@ -163,7 +182,10 @@
 
 				if ( WEBVR.isAvailable() === true ) {
 
-					document.body.appendChild( WEBVR.getButton( effect ) );
+					var b = WEBVR.getButton( effect );
+					document.body.appendChild( b );
+					
+					//b.click();
 
 				}
 
@@ -187,6 +209,9 @@
 			function animate() {
 
 				effect.requestAnimationFrame( animate );
+				
+				//effect.requestPresent();
+				
 				render();
 
 			}
@@ -199,6 +224,25 @@
 				controller2.update();
 
 				controls.update();
+				
+				torus = room.children.filter(function(c) {
+					return c.geometry instanceof THREE.TorusGeometry
+				});
+				
+				if(torus.length != 1) {
+					console.log("WARNING: INCORRECT NUMBER OF HULA HOOPS FOUND");
+				} 
+				
+				torus = torus[0];
+				//torus.applyMatrix(controller1.getStandingMatrix());
+				//torus.
+				torus.setRotationFromQuaternion(
+					(new THREE.Quaternion).fromArray(
+					controller1.getGamepad().pose.orientation
+					)
+				);
+				
+				
 
 				// cube rotation -- disabled for now
 				
