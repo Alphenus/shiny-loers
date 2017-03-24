@@ -15,8 +15,9 @@
         <script>
         var world, mass, cylMat, hoopMat, cylBody, hoopBody, shape, timeStep=1/60,
            camera, scene, renderer, geometry, material, cylMesh, hoopMesh;
-        initThree();
+        var hoopRad, hoopTube, cylRad, cylH;
         initCannon();
+        initThree();
         var rimPosition = new CANNON.Vec3(1.5,0,0);
         var impulse = new CANNON.Vec3(1,0,0);
         hoopBody.applyImpulse(impulse, rimPosition);
@@ -34,11 +35,13 @@
             world.defaultContactMaterial.friction = 0.3;
 
             // create a cylinder
-            var cylMass = 10, cylRad = 1;
+            var cylMass = 10;
+            cylRad = 1;
+            cylH = 5;
             var qCyl = new CANNON.Quaternion();
             qCyl.setFromAxisAngle(new Vec3(1,0,0), Math.PI / 2)
-            var cylShape = new CANNON.Cylinder(cylRad,cylRad,5,10);
-            cylShape.transformAllPoints(new Vec3(),qCyl);
+            var cylShape = new CANNON.Cylinder(cylRad,cylRad,cylH,10);
+            //cylShape.transformAllPoints(new Vec3(),qCyl);
             cylBody = new CANNON.Body({ mass:cylMass});
             cylBody.addShape(cylShape);
             cylBody.position.set(0,0,1);
@@ -47,10 +50,11 @@
 
 
             // create a hoop
-            var hoopMass = 1, hoopRad = 1.5;
+            var hoopMass = 1;
+            hoopRad = 1.5;
             var qHoop = new CANNON.Quaternion();
             qHoop.setFromAxisAngle(new Vec3(1,0,0), Math.PI / 2);
-            var hoopShape = new CANNON.Trimesh.createTorus(hoopRad,0.1,10,6);
+            var hoopShape = new CANNON.Trimesh.createTorus(hoopRad,0.01,10,6);
             //hoopShape.transformAllPoints(new Vec3(),qHoop);
             hoopBody = new CANNON.Body({ mass:hoopMass, shape:hoopShape, quaternion:qHoop});
             hoopBody.position.set(0,0,2.5);
