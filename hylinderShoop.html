@@ -13,11 +13,13 @@
         <script src="libs/three.min.js"></script>
 
         <script>
-        var world, mass, cylMat, hoopMat, cylBody, hoopBody, shape, timeStep=1/60,
-           camera, scene, renderer, geometry, material, cylMesh, hoopMesh, planeMesh,
+        var world, mass, cylMat, hoopMat, cylBody, cylBody2, hoopBody, shape, timeStep=1/60,
+           camera, scene, renderer, geometry, material, cylMesh, cyl2Mesh, hoopMesh, planeMesh,
            cylRad;
         var cylRad = 0.35/2;
-        var Vec3 = CANNON.Vec3
+        var hoopRad = 0.5;
+        var hoopTube = 0.025;
+        var Vec3 = CANNON.Vec3;
         initCannon();
         initThree();
         animate();
@@ -26,23 +28,42 @@
 
             // create world
             world = new CANNON.World();
-            world.gravity.set(0,0,-9.81);
+            world.gravity.set(0,0,-1);
             world.broadphase = new CANNON.NaiveBroadphase();
+            world.solver.iterations = 17;
+            world.defaultContactMaterial.contactEquationStiffness = 1e6;
+            world.defaultContactMaterial.contactEquationRelaxation = 3;
+            world.defaultContactMaterial.friction = 0.3;
 
+            //Create cylinder for stuff
             var cylMass = 10;
-            var cylShape = new CANNON.Cylinder(cylRad,cylRad,5,10);
-            cylBody = new CANNON.Body({ mass:cylMass});
-            cylBody.position.set(0,0,2);
+            var cylShape = new CANNON.Cylinder(cylRad/1.2,cylRad,1,10);
+            cylBody = new CANNON.Body({ mass:cylMass, shape:cylShape });
+            cylBody.position.set(0,0,1);
+            //cylBody.quaternion.setFromVectors(new CANNON.Vec3(0,1,0), new CANNON.Vec3(0,0,1));
             world.add(cylBody)
-            
-            //var qCyl = new CANNON.Quaternion();
-            //qCyl.setFromAxisAngle(new Vec3(0,1,0), Math.PI / 2)
-            //cylShape.transformAllPoints(new Vec3(),qCyl);
-            //cylBody = new CANNON.Body({ mass:cylMass});
-            //cylBody.addShape(cylShape);
-            //cylBody.position.set(0,0,2);
+
+            cylBody.collisionResponse = 1; // no impact on other bodys
+            cylBody.addEventListener("collide", function(e){ console.log("cylinder collided"); } );
+            cylBody.addEventListener("intersect", function(e){ console.log("cylinder collided"); } );
+
+            var cylShape2 = new CANNON.Cylinder(cylRad/1.2,cylRad,1,10);
+            cylBody2 = new CANNON.Body({ mass:cylMass, shape:cylShape2 });
+            cylBody2.position.set(0,0,3);
+            //cylBody2.quaternion.setFromVectors(new CANNON.Vec3(0,1,0), new CANNON.Vec3(0,0,1));
+            world.add(cylBody2)
 
 
+            //Create torus for stuff
+            var hoopMass = 1;
+            var hoopShape = new CANNON.Trimesh.createTorus(hoopRad,hoopTube,10,6);
+            hoopBody = new CANNON.Body({ mass:hoopMass, shape:hoopShape });
+            hoopBody.position.set(0,-2,1);
+            hoopBody.velocity.set(0,3,0);
+            world.add(hoopBody);
+
+            hoopBody.collisionResponse = 1; // no impact on other bodys
+            hoopBody.addEventListener("collide", function(e){ console.log("sphere collided"); } );
 
 
             //Create Plane for physics
@@ -52,39 +73,50 @@
 
             world.add(groundBody);
 
+
         }
 
         function initThree() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 100 );
+            camera.position.x = 5
+            camera.lookAt( new THREE.Vector3( 0, 0, 0) );
 
-            var campos = 2;
+
+            /*var campos = 2;
             camera.position.x = campos;
             camera.position.y = campos;
             camera.position.z = campos;
-
+            */
+/*
             camera.rotation.x = -45 * Math.PI / 180;
             camera.rotation.y = 45 * Math.PI / 180;
             camera.rotation.z = (150) * Math.PI / 180;
+            */
             scene.add( camera );
 
             var axisHelper = new THREE.AxisHelper(3);
             scene.add(axisHelper);
 
-            var cylGeometry = new THREE.CylinderGeometry( cylRad, cylRad, 1, 32 );
-            var torGeometry = new THREE.TorusGeometry( 0.5, 1/10, 16, 128 );
+            var cylGeometry = new THREE.CylinderGeometry( cylRad/1.2, cylRad, 1, 32 );
+            var hoopGeometry = new THREE.TorusGeometry( hoopRad, hoopTube, 16, 128 );
             var planeGeometry = new THREE.PlaneGeometry( 10, 10, 32 );
 
             material = new THREE.MeshBasicMaterial( { color: 0xcc5555 } );
+            hoopMaterial = new THREE.MeshBasicMaterial( { color: 0x123456 } );
             cylMaterial = new THREE.MeshBasicMaterial( { color: 0xccFFFF } );
 
             cylMesh = new THREE.Mesh( cylGeometry, cylMaterial );
-            hoopMesh = new THREE.Mesh( torGeometry, material );
+            cyl2Mesh = new THREE.Mesh( cylGeometry, cylMaterial );
+
+            hoopMesh = new THREE.Mesh( hoopGeometry, hoopMaterial );
             planeMesh = new THREE.Mesh(planeGeometry, material);
 
             scene.add( cylMesh );
+            scene.add( cyl2Mesh );
+
             scene.add( planeMesh );
-            /*scene.add( hoopMesh );*/
+            scene.add( hoopMesh );
 
             renderer = new THREE.WebGLRenderer();
 
@@ -107,11 +139,13 @@
 
               cylMesh.position.copy(cylBody.position);
               cylMesh.quaternion.copy(cylBody.quaternion);
-            /*
+              cyl2Mesh.position.copy(cylBody2.position);
+              cyl2Mesh.quaternion.copy(cylBody2.quaternion);
+
               hoopMesh.position.copy(hoopBody.position);
               hoopMesh.quaternion.copy(hoopBody.quaternion);
-              console.log("hoop angular velocity: " + hoopBody.angularVelocity);
-              */
+              //console.log("hoop angular velocity: " + hoopBody.angularVelocity);
+
           }
           function render() {
               renderer.render( scene, camera );
