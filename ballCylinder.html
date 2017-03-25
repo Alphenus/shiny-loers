@@ -15,9 +15,8 @@
         <script>
         var hoopRad = 0.5;
         var hoopTube = 0.1;
-        var cylRad = 0.35;
         var sphereRad = 0.05;
-        var layers = 3;
+        var layers = 5;
         var cylH = sphereRad * layers * 2;
         var Vec3 = CANNON.Vec3
         var world, mass, cylMat, hoopMat, sphereBody, hoopBody1, shape, timeStep=1/60,
@@ -51,7 +50,7 @@
             world.addMaterial(hoopCylContactMaterial);
 
             // create hoop
-            var cylMass = 10;
+            var cylMass = 5;
             var qCyl = new CANNON.Quaternion();
             var larae = qCyl.setFromAxisAngle(new CANNON.Vec3(1,0,0), Math.PI / 2)
             var hoopShape = new CANNON.Trimesh.createTorus(hoopRad,hoopTube,10,6);
@@ -63,22 +62,22 @@
             world.add(hoopBody1);
 
             // create some spheres
-            sphereBody = new CANNON.Body({ mass:cylMass});
+            sphereBody = new CANNON.Body({ mass:cylMass });
             var sphereShape = new CANNON.Sphere(sphereRad);
             sphereBody.addShape(sphereShape,new CANNON.Vec3(0,0,0));
             var thetas = [];
             for (i = 0; i<7; ++i) {
               thetas.push((2 * Math.PI) * i/7);
             }
-            sphereBody.position.set(0,0,layers/2)
-
-            for (zed = -layers/2; zed < layers/2; ++zed) {
+            // lattice creation
+            for (zed = -layers/2; zed < (layers/2 + 0.1); ++zed) {
               for (j = 0; j < thetas.length; ++j) {
-                sphereBody.addShape(sphereShape, new CANNON.Vec3(2*sphereRad*Math.cos(thetas[i]),2*sphereRad*Math.sin(thetas[i]),zed*cylRad*2));
+                sphereBody.addShape(sphereShape, new CANNON.Vec3(2*sphereRad*Math.cos(thetas[i]),2*sphereRad*Math.sin(thetas[i]),zed*sphereRad*2));
               }
             }
 
-            sphereBody.position.set(0,0,1);
+            sphereBody.position.set(0,0,2);
+            sphereBody.quaternion.setFromVectors(new CANNON.Vec3(0,1,0), new CANNON.Vec3(0,1,1))
             world.addBody(sphereBody)
 
             // create base plane
@@ -90,6 +89,7 @@
         function initThree() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 100 );
+
             camera.position.x = 2;
             camera.position.y = 2;
             camera.position.z = 2;
@@ -97,13 +97,15 @@
             camera.rotation.x = -45 * Math.PI / 180;
             camera.rotation.y = 45 * Math.PI / 180;
             camera.rotation.z = (150) * Math.PI / 180;
+
+            //camera.lookAt(new THREE.Vector3(0,0,0));
             scene.add( camera );
 
             cylGeometry = new THREE.CylinderGeometry( sphereRad*6, sphereRad*6, cylH, 32,32)
             torGeometry = new THREE.TorusGeometry( hoopRad, hoopTube, 16, 128 );
             planeGeometry = new THREE.PlaneGeometry( 2, 2, 32, 32);
             material = new THREE.MeshBasicMaterial( { color: 0xcc5555, wireframe: true } );
-            cylGeometry.rotateX( Math.PI / 2)
+            //cylGeometry.rotateX( Math.PI / 2)
             cylMesh = new THREE.Mesh( cylGeometry, material );
             hoopMesh = new THREE.Mesh( torGeometry, material );
             planeMesh = new THREE.Mesh( planeGeometry, material );
