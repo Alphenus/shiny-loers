@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Making Lörs Lärä Again</title>
+        <style>
+        </style>
+
+    </head>
+    <body>
+
+        <script src="libs/cannon.js"></script>
+        <script src="libs/three.min.js"></script>
+
+        <script>
+        var hoopRad = 0.5;
+        var hoopTube = 0.05;
+        var cylRad = 0.35;
+        var cylH = 1;
+        var Vec3 = CANNON.Vec3
+        var world, mass, cylMat, hoopMat, cylBody, cylBody2, hoopBody, shape, timeStep=1/60,
+           camera, scene, renderer, geometry, material, cylMesh, hoopMesh;
+
+        initCannon();
+        initThree();
+        var rimPosition = new CANNON.Vec3(0.5,0,0);
+        var impulse = new CANNON.Vec3(0,1,0);
+        hoopBody.applyImpulse(impulse, rimPosition);
+        animate();
+
+        function initCannon() {
+            // create world
+            world = new CANNON.World();
+            world.gravity.set(0,0,-2);
+            world.broadphase = new CANNON.NaiveBroadphase();
+            world.solver.iterations = 17;
+            world.defaultContactMaterial.contactEquationStiffness = 1e6;
+            world.defaultContactMaterial.contactEquationRelaxation = 3;
+            world.defaultContactMaterial.friction = 0.3;
+
+            // add friction between cylinder and hoop
+            hoopMat = new CANNON.Material("hoopMat");
+            cylMat = new CANNON.Material("cylMat");
+            var hoopCylContactMaterial = new CANNON.ContactMaterial(hoopMat, cylMat,{
+                friction: 0.3,
+                restitution: 0,
+                contactEquationStiffness: 1000
+              });
+            world.addMaterial(hoopCylContactMaterial);
+
+            // create a cylinder
+            var cylMass = 10;
+            var qCyl = new CANNON.Quaternion();
+            var larae = qCyl.setFromAxisAngle(new CANNON.Vec3(1,0,0), Math.PI / 2)
+            var cylShape = new CANNON.Cylinder(cylRad,cylRad,cylH,10);
+            //cylShape.transformAllPoints(new CANNON.Vec3(),larae);
+            cylBody = new CANNON.Body({ mass:cylMass, shape:cylShape,
+                          material:hoopCylContactMaterial });
+            //cylBody.addShape(cylShape);
+            cylBody.position.set(0,0,1);
+            world.add(cylBody);
+
+//            cylBody2 = new CANNON.Body({ mass:cylMass, shape:cylShape, material:hoopCylContactMaterial});
+//
+    //        cylBody2.position.set(0,0,4)
+  //          world.add(cylBody2)
+
+
+
+            // create a hoop
+            var hoopMass = 1;
+            //hoopRad = 1.5;
+            //hoopTube = 0.1;
+            var qHoop = new CANNON.Quaternion();
+            qHoop.setFromAxisAngle(new CANNON.Vec3(1,0,0), Math.PI / 2);
+            var hoopShape = new CANNON.Trimesh.createTorus(hoopRad,hoopTube,10,6);
+            //hoopShape.transformAllPoints(new Vec3(),qHoop);
+            hoopBody = new CANNON.Body({ mass:hoopMass, shape:hoopShape,
+                            material:hoopCylContactMaterial });
+            hoopBody.position.set(0,0,1);
+            //hoopBody.angularVelocity.set(0,10,0);
+            world.add(hoopBody);
+
+            // create base plane
+            var groundShape = new CANNON.Plane();
+            var groundBody = new CANNON.Body({ mass: 0, shape: groundShape});
+            world.add(groundBody);
+        }
+
+        function initThree() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 100 );
+            camera.position.x = 3;
+            camera.position.y = 3;
+            camera.position.z = 3;
+
+            camera.rotation.x = -45 * Math.PI / 180;
+            camera.rotation.y = 45 * Math.PI / 180;
+            camera.rotation.z = (150) * Math.PI / 180;
+            scene.add( camera );
+
+            cylGeometry = new THREE.CylinderGeometry( cylRad, cylRad, cylH, 32 );
+            torGeometry = new THREE.TorusGeometry( hoopRad, hoopTube, 16, 128 );
+            planeGeometry = new THREE.PlaneGeometry( 2, 2, 32, 32);
+            material = new THREE.MeshBasicMaterial( { color: 0xcc5555, wireframe: true } );
+            cylGeometry.rotateX(Math.PI / 2);
+            cylMesh = new THREE.Mesh( cylGeometry, material );
+            //cylMesh2 = new THREE.Mesh( cylGeometry, material );
+            hoopMesh = new THREE.Mesh( torGeometry, material );
+            planeMesh = new THREE.Mesh( planeGeometry, material );
+
+
+            scene.add( cylMesh );
+            //scene.add( cylMesh2 );
+            scene.add( hoopMesh );
+            scene.add( planeMesh );
+
+            var axisHelper = new THREE.AxisHelper(5);
+            scene.add(axisHelper);
+
+            renderer = new THREE.WebGLRenderer();
+
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            document.body.appendChild( renderer.domElement );
+
+        }
+
+
+          function animate() {
+              requestAnimationFrame( animate );
+              updatePhysics();
+              render();
+          }
+
+          function updatePhysics() {
+              // Step the physics world
+              world.step(timeStep);
+              // Copy coordinates from Cannon.js to Three.js
+
+              cylMesh.position.copy(cylBody.position);
+              cylMesh.quaternion.copy(cylBody.quaternion);
+              //cylMesh2.position.copy(cylBody2.position);
+              //cylMesh.quaternion.copy(cylBody.quaternion);
+              hoopMesh.position.copy(hoopBody.position);
+              hoopMesh.quaternion.copy(hoopBody.quaternion);
+            //  console.log("hoop angular velocity: " + hoopBody.angularVelocity);
+          }
+          function render() {
+              renderer.render( scene, camera );
+          }
+
+        /*
+        var timeStep = 1.0 / 60.0; // seconds
+        // make hoop spin
+        var rimPosition = new Vec3(1.5,0,0)
+        var impulse = new Vec3(0,1,0)
+        hoopBody.applyImpulse(impulse,rimPosition)
+        // let both fall
+        for (var i = 0; i < 60; ++i){
+          world.step(timeStep);
+          console.log("cylinder position: " + cylBody.position.x,cylBody.position.y,cylBody.position.z);
+          console.log("hoop position: " + hoopBody.position.x,hoopBody.position.y,hoopBody.position.z);
+          console.log("hoop velocity: " + hoopBody.velocity);
+          console.log("hoop angular velocity: " + hoopBody.angularVelocity);
+        }
+        */
+        /*
+        // add impulse
+        console.log("adding force")
+        var imp = new CANNON.Vec3(1,0,0);
+        sphereBody.applyForce(imp,sphereBody.position);
+        for (var i = 0; i < 10; ++i){
+          world.step(timeStep);
+          console.log(sphereBody.position.x,sphereBody.position.y,sphereBody.position.z);
+        }
+        */
+        </script>
+
+
+    </body>
+</html>
