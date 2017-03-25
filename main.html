@@ -18,18 +18,35 @@
         renderer.setSize( window.innerWidth, window.innerHeight );
         document.body.appendChild( renderer.domElement );
 
-        var geometry = new THREE.BoxGeometry( 2, 1, 1 );
-        var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-        var cube = new THREE.Mesh( geometry, material );
-        scene.add( cube );
+        var geometry = new THREE.TorusGeometry(2, 0.03, 16, 100);
+        var torusTex = new THREE.TextureLoader().load("vebvr-sample-controllers/hula-tex.png");
+				torusTex.wrapS = THREE.RepeatWrapping;
+				torusTex.wrapT = THREE.RepeatWrapping;
+				torusTex.repeat.set(4,4);
+        var torus = new THREE.Mesh(
+					new THREE.TorusGeometry(
+						2, // radius (in m)
+						0.03 / 100, // diameter of tube
+						16, // no. of radial segments
+						100 // no. of tubular segments
+					),
+					new THREE.MeshBasicMaterial(
+						//{ color: 0xffa3fd }
+						{ map: torusTex }
+					)
+				);
+
+        scene.add( torus );
 
         camera.position.z = 5;
+        camera.position.y = 1
 
         var render = function () {
         requestAnimationFrame( render );
 
-        cube.rotation.x += 0.01;
-        cube.rotation.y += 0.01;
+        torus.rotation.x = Math.PI / 2;
+        torus.rotation.x += 0.00;
+        torus.rotation.y += 0.00;
 
         renderer.render(scene, camera);
         };
