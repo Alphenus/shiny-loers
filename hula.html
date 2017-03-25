@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+	<title>Collisions - Physijs</title>
+	
+	<!--
+	<link rel="stylesheet" type="text/css" href="css/styles.css" />
+	-->
+	
+	<script type="text/javascript" src="libs/three.min.js"></script>
+	<script type="text/javascript" src="libs/stats.js"></script>
+	<script type="text/javascript" src="libs/physi.js"></script>
+	
+	<script type="text/javascript">
+	
+	//'use strict';
+	
+	Physijs.scripts.worker = 'libs/physijs_worker.js';
+	Physijs.scripts.ammo = '../libs/ammo.js';
+	
+	var initScene, render, _boxes = [], spawnBox, loader,
+		renderer, render_stats, physics_stats, scene, ground_material, ground, light, camera;
+	
+	initScene = function() {
+		renderer = new THREE.WebGLRenderer({ antialias: true });
+		renderer.setSize( window.innerWidth, window.innerHeight );
+		renderer.shadowMap.enabled = true;
+		renderer.shadowMapSoft = true;
+		document.getElementById( 'viewport' ).appendChild( renderer.domElement );
+		
+		render_stats = new Stats();
+		render_stats.domElement.style.position = 'absolute';
+		render_stats.domElement.style.top = '0px';
+		render_stats.domElement.style.zIndex = 100;
+		document.getElementById( 'viewport' ).appendChild( render_stats.domElement );
+		
+		physics_stats = new Stats();
+		physics_stats.domElement.style.position = 'absolute';
+		physics_stats.domElement.style.top = '50px';
+		physics_stats.domElement.style.zIndex = 100;
+		document.getElementById( 'viewport' ).appendChild( physics_stats.domElement );
+
+		scene = new Physijs.Scene;
+		
+		//scene.setGravity(new THREE.Vector3( 0, -9.82, 0 ));
+		scene.setGravity(new THREE.Vector3( 0, -0.5, 0 ));
+		
+		scene.addEventListener(
+			'update',
+			function() {
+				scene.simulate( undefined, 1 );
+				physics_stats.update();
+			}
+		);
+		
+		camera = new THREE.PerspectiveCamera(
+			35,
+			window.innerWidth / window.innerHeight,
+			1,
+			1000
+		);
+		//camera.position.set( 60, 50, 60 );
+		camera.position.set(5, 1, 5);
+		camera.lookAt( scene.position );
+		scene.add( camera );
+		
+		// Light
+		light = new THREE.DirectionalLight( 0xFFFFFF );
+		light.position.set( 20, 40, -15 );
+		light.target.position.copy( scene.position );
+		light.castShadow = true;
+		light.shadowCameraLeft = -60;
+		light.shadowCameraTop = -60;
+		light.shadowCameraRight = 60;
+		light.shadowCameraBottom = 60;
+		light.shadowCameraNear = 20;
+		light.shadowCameraFar = 200;
+		light.shadowBias = -.0001
+		light.shadowMapWidth = light.shadowMapHeight = 2048;
+		light.shadowDarkness = .7;
+		scene.add( light );
+
+		// Loader
+		loader = new THREE.TextureLoader();
+		
+		// Ground
+		ground_material = Physijs.createMaterial(
+			//new THREE.MeshLambertMaterial({ map: loader.load( 'images/rocks.jpg' ) }),
+			new THREE.MeshBasicMaterial({color : 0x404040}),
+			.8, // high friction
+			.3 // low restitution
+		);
+		/*
+		ground_material.map.wrapS = ground_material.map.wrapT = THREE.RepeatWrapping;
+		ground_material.map.repeat.set( 3, 3 );
+		*/
+		
+		ground = new Physijs.BoxMesh(
+			new THREE.BoxGeometry(10, 1, 10),
+			ground_material,
+			0 // mass
+		);
+		ground.receiveShadow = true;
+		scene.add( ground );
+		
+		hoopRadius = 1.0 / 2; // in m
+		hoopTubeRadius = 1.1 / 100 / 2;
+		
+			
+		//var nSegments = 2;
+		var nSegments = 16;
+		
+		var hoopMass = 1;
+		
+		getTorusSegment = function(
+			idx = 0,
+			l = Math.PI * 2 * hoopRadius / nSegments,
+			w = hoopTubeRadius, 
+			m = hoopMass / nSegments
+			) {
+			var s = new Physijs.BoxMesh(
+				new THREE.BoxGeometry(
+					w, w,
+					l
+				),
+				Physijs.createMaterial(
+					new THREE.MeshBasicMaterial(
+						{color: 0xffa3fd}
+					),
+					0.6,
+					0.3
+				)
+			);
+			
+			//s.mass = m;
+			
+			var theta = idx * Math.PI * 2 / nSegments + Math.PI / 2;
+			
+			s.position.x = Math.sin(theta) * hoopRadius;
+			s.position.z = Math.cos(theta) * hoopRadius;
+			
+			s.rotateY(theta + Math.PI / 2);
+			
+			return s;
+		}
+		
+		//torusCenter = getTorusSegment();
+		torusCenter =  new Physijs.BoxMesh(
+			new THREE.BoxGeometry(
+				//hoopRadius / 2, hoopRadius / 5,  hoopRadius / 2
+				0,0,0
+				///1000, 1000, 1000
+			),
+			Physijs.createMaterial(
+					new THREE.MeshBasicMaterial(
+						{color: 0xffa3fd}
+					),
+					0.6,
+					0.3
+			)
+		);
+		
+		torusCenter.mass = 1;
+		//torusCenter.position.x = - hoopRadius;
+		torusCenter.position.y = 2;
+		
+		torusCenter.rotateX(0.5);
+		//torusCenter.applyForce = function() {return true};
+		//torusCenter.applyCentralForce = function() {return true};
+		//torusCenter.applyImpulse = function() {return true};
+
+		for(var i = 0; i < nSegments; i++) {
+			torusCenter.add(getTorusSegment(idx = i));
+		}
+		
+		scene.add(torusCenter);
+		
+		//scene.add(torus2);
+		
+		cylinder = new Physijs.CylinderMesh(
+			new THREE.CylinderGeometry(
+				0.35 / 2, 0.35 / 2,
+				1,
+				64
+			),
+			Physijs.createMaterial(
+				new THREE.MeshBasicMaterial(
+					{color: 0xababab}
+				),
+				0.6,
+				0.3
+			)
+		);
+		
+		cylinder.mass = 1;
+		cylinder.receiveShadow = true;
+		
+		cylinder.position.y = 2;
+		cylinder.position.x = 0.25;
+		//cylinder.rotateX(1);
+		
+		scene.add(cylinder);
+		
+		//spawnBox();
+		
+		requestAnimationFrame( render );
+		scene.simulate();
+	};
+	
+	render = function() {
+		requestAnimationFrame( render );
+		renderer.render( scene, camera );
+		render_stats.update();
+	};
+	
+	window.onload = initScene;
+	
+	</script>
+</head>
+
+<body>
+	<div id="heading">
+		<h1>Collisions</h1>
+		<p>Demonstrating the collision callback</p>
+	</div>
+	<div id="viewport"></div>
+</body>
+
+</html>
