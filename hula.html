@@ -21,7 +21,6 @@
 	<title>hula</title>
 	
 	<script type="text/javascript" src="libs/three.min.js"></script>
-	<script type="text/javascript" src="libs/stats.js"></script>
 	<script type="text/javascript" src="libs/physi.js"></script>
 		
 	<script src="../libs/three.min.js"></script>
@@ -45,6 +44,7 @@
 	}
 		
 	var clock = new THREE.Clock();
+	ZERO = new THREE.Vector3(0, 0, 0);
 	
 	Physijs.scripts.worker = 'libs/physijs_worker.js';
 	Physijs.scripts.ammo = '../libs/ammo.js';
@@ -93,7 +93,7 @@
 		scene = new Physijs.Scene;
 		
 		//scene.setGravity(new THREE.Vector3( 0, -9.82, 0 ));
-		scene.setGravity(new THREE.Vector3( 0, -0.5, 0 ));
+		scene.setGravity(new THREE.Vector3( 0, -9.82, 0 ));
 		
 		scene.addEventListener(
 			'update',
@@ -165,8 +165,13 @@
 		ground.receiveShadow = true;
 		scene.add( ground );
 		
+		// relevant dimensions
+		
 		hoopRadius = 1.0 / 2; // in m
 		hoopTubeRadius = 1.1 / 100 / 2;
+		
+		hipWidth = 0.35
+		
 		
 		/* TODO: TORUS SHAPE FROM THIS MODEL, attach to simulation
 				// see:
@@ -206,17 +211,22 @@
 		getTorusSegment = function(
 			idx = 0,
 			l = Math.PI * 2 * hoopRadius / nSegments,
-			w = hoopTubeRadius, 
+			w = hoopTubeRadius * 2, 
 			m = hoopMass / nSegments
 			) {
 			var s = new Physijs.BoxMesh(
 				new THREE.BoxGeometry(
 					w, w,
-					l
+					l,
+					3, 3, 3
 				),
 				Physijs.createMaterial(
 					new THREE.MeshBasicMaterial(
-						{color: 0xffa3fd}
+						{
+							color: 0xffa3fd,
+							opacity: 0.5, transparent : true,
+							wireframe: true
+						}
 					),
 					0.6,
 					0.3
@@ -235,7 +245,6 @@
 			return s;
 		}
 		
-		//torusCenter = getTorusSegment();
 		torusCenter =  new Physijs.BoxMesh(
 			new THREE.BoxGeometry(
 				//hoopRadius / 2, hoopRadius / 5,  hoopRadius / 2
@@ -244,15 +253,37 @@
 			),
 			Physijs.createMaterial(
 					new THREE.MeshBasicMaterial(
-						{color: 0xffa3fd}
+						//{color: 0xffa3fd}
+						{opacity: 0, transparent : true}
 					),
 					0.6,
 					0.3
 			)
 		);
 		
-		torusCenter.mass = 1;
+		torusCenter.mass = 2;
 		torusCenter.position.y = 2;
+		
+		hulaTex = new THREE.TextureLoader().load("hula-tex.png");
+		hulaTex.wrapS = THREE.RepeatWrapping;
+		hulaTex.wrapT = THREE.RepeatWrapping;
+		hulaTex.repeat.set(4,4);
+				
+		visualHulaLoop = new THREE.Mesh(
+			new THREE.TorusGeometry(
+						hoopRadius,
+						hoopTubeRadius,
+						16, // no. of radial segments
+						128 // no. of tubular segments
+					),
+					new THREE.MeshBasicMaterial(
+						//{ color: 0xffa3fd }
+						{ map: hulaTex }
+					)
+				);
+				
+		visualHulaLoop.geometry.rotateX(Math.PI / 2);
+		room.add(visualHulaLoop);
 		
 		torusCenter.rotateX(0.5);
 
@@ -263,29 +294,66 @@
 		//room.add(torusCenter);
 		scene.add(torusCenter);
 		
+		/*
+		var hoopConstraint = new Physijs.DOFContsraint(
+			
+		)
+		*/
+
 		cylinder = new Physijs.CylinderMesh(
 			new THREE.CylinderGeometry(
-				0.35 / 2, 0.35 / 2,
-				1,
+				hipWidth / 2, hipWidth / 2,
+				3,
 				64
 			),
 			Physijs.createMaterial(
 				new THREE.MeshBasicMaterial(
-					{color: 0xababab}
+					{
+						color: 0xababab,
+						opacity : 0.,
+						transparent : true
+					}
 				),
 				0.6,
-				0.3
+				0.99
 			)
 		);
 		
 		cylinder.mass = 1;
 		cylinder.receiveShadow = true;
 		
-		cylinder.position.y = 2;
-		cylinder.position.x = 0.25;
-		//cylinder.rotateX(1);
+		cylinder.setCcdMotionThreshold(0.5);
+		cylinder.setCcdSweptSphereRadius(0.05);
+		
 		
 		scene.add(cylinder);
+		
+		/*
+		
+		//cylinderPivot = new THREE.Group();
+		cylinderPivot = new Physijs.BoxMesh(
+			new THREE.BoxGeometry(0.1, 0.1, 0.1),
+			Physijs.createMaterial(
+				new THREE.MeshBasicMaterial(
+					{
+						color: 0xababab,
+						opacity : 0.5,
+						transparent : true
+					}
+				),
+				0.6,
+				0.3
+			)
+		);
+		
+		cylinderPivot.mass = 1;
+		
+		cylinder.rotateX(Math.PI / 2);
+		
+		
+		//cylinderPivot.add(cylinder);
+		//scene.add(cylinderPivot);
+		*/
 		
 		// vive controller blocks // TODO
 		/*
@@ -365,8 +433,6 @@
 	
 	function animate() {
 		effect.requestAnimationFrame( animate );
-		
-		
 		render();
 		
 	}
@@ -382,13 +448,45 @@
 				controller2.update();
 
 				controls.update();
+		
+				if(controller1.getButtonState("grips")) {
+					resetHoopPosition();
+				}
 				
 				var p1 = controller1.getWorldPosition();
 				var r1 = controller1.getWorldRotation();
 				
 				var p2 = controller2.getWorldPosition();
 				var r2 = controller2.getWorldRotation();
+		
+				cylinder.position.copy(p1)
+				cylinder.setRotationFromEuler(r1);
+				cylinder.rotateOnAxis(new THREE.Vector3(1,0,0), Math.PI/2);
+				cylinder.translateOnAxis(new THREE.Vector3(0, 0, -1), hipWidth / 2);
+		
+				cylinder.setLinearVelocity(ZERO);
+				cylinder.setAngularVelocity(ZERO);
+		
+				cylinder.__dirtyPosition = true;
+				cylinder.__dirtyRotation = true;
+		
+		
+				visualHulaLoop.position.copy(torusCenter.getWorldPosition());
+				visualHulaLoop.setRotationFromEuler(torusCenter.getWorldRotation());
 				
+		
+				/*
+				cylinderPivot.position.copy(p1)
+				cylinderPivot.setRotationFromEuler(r1);
+		
+				cylinderPivot.setLinearVelocity(ZERO);
+				cylinderPivot.setAngularVelocity(ZERO);
+		
+				cylinderPivot.__dirtyPosition = true;
+				cylinderPivot.__dirtyRotation = true;
+				
+				*/
+		
 		/*
 				block1Pivot.position.copy(p1);
 				block2Pivot.position.copy(p2);
@@ -397,6 +495,7 @@
 				block2Pivot.setRotationFromEuler(r2);
 				
 				*/
+			
 				effect.render( scene, camera );
 	};
 	function onWindowResize() {
@@ -408,6 +507,24 @@
 
 	}
 		
+	function resetHoopPosition() {
+		
+		torusCenter.position.copy(ZERO);
+		torusCenter.position.y = 2;
+		
+		torusCenter.rotation.x = 0;
+		torusCenter.rotation.y = 0;
+		torusCenter.rotation.z = 0;
+		
+		torusCenter.setLinearVelocity(ZERO);
+		torusCenter.setAngularVelocity(ZERO);
+		
+		torusCenter.__dirtyPosition = true;
+		torusCenter.__dirtyRotation = true;
+		
+		
+		
+	}
 
 	
 	
