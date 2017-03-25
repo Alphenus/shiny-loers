@@ -134,23 +134,32 @@
 
 				HIP_RADIUS = 0.35 / 2;
 				
-				cylinder = new THREE.Mesh(
-					new THREE.CylinderGeometry( 
-						HIP_RADIUS, HIP_RADIUS, // radiustop, radiusbottom
-						1, // height
-						64 // radiusSegments
+				// blocks for the cnotrollers ('hips')
+				block1Pivot = new THREE.Group();
+				block2Pivot = new THREE.Group();
+				
+				block1 = new THREE.Mesh(
+					new THREE.BoxGeometry(
+						0.1, 0.5, 0.05
+					),
+					new THREE.MeshBasicMaterial( {color: 0xababab , opacity : 0.5, transparent: true})
+				) 
+				block2 = new THREE.Mesh(
+					new THREE.BoxGeometry(
+						0.1, 0.5, 0.05
 					),
 					new THREE.MeshBasicMaterial( {color: 0xababab , opacity : 0.5, transparent: true})
 				) 
 				
-				cylinder.rotateX(Math.PI / 2);
-				cylinder.position.y = HIP_RADIUS;
+				block1.rotateX(Math.PI / 2);
+				block2.rotateX(Math.PI / 2);
 				
-				cylinderPivot = new THREE.Group();
+				room.add(block1Pivot);
+				room.add(block2Pivot);
 				
-				room.add(cylinderPivot);
+				block1Pivot.add(block1);
+				block2Pivot.add(block2);
 				
-				cylinderPivot.add(cylinder);
 				
 				room.add(new THREE.AxisHelper(1));
 				
@@ -253,33 +262,18 @@
 				} 
 				
 				torus = torus[0];
-				//torus.applyMatrix(controller1.getStandingMatrix());
-				//torus.
-				/*
-				torus.setRotationFromQuaternion(
-					(new THREE.Quaternion).fromArray(
-					controller1.getGamepad().pose.orientation
-					)
-				);
-				*/
 				
-				/*
-				cylinder = room.children.filter(function(c) {
-					return c.geometry instanceof THREE.CylinderGeometry
-				})[0];
-				*/
+				var p1 = controller1.getWorldPosition();
+				var r1 = controller1.getWorldRotation();
 				
-				var p = controller1.getWorldPosition();
-				cylinderPivot.position.x = p.x;
-				cylinderPivot.position.z = p.z;
-				cylinderPivot.position.y = p.y;
+				var p2 = controller2.getWorldPosition();
+				var r2 = controller2.getWorldRotation();
 				
-				var v = controller1.getWorldDirection();
-				var r = controller1.getWorldRotation();
-				var y = new THREE.Vector3(0, 1, 0);
-				//cylinderPivot.quaternion.setFromUnitVectors(y, v.clone().normalize());
-				//cylinderPivot.matrix.extractRotation()
-				cylinderPivot.setRotationFromEuler(r);
+				block1Pivot.position.copy(p1);
+				block2Pivot.position.copy(p2);
+				
+				block1Pivot.setRotationFromEuler(r1);
+				block2Pivot.setRotationFromEuler(r2);
 				
 				
 				// cube rotation -- disabled for now
