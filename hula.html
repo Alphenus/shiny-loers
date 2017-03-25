@@ -31,6 +31,7 @@
 	<script src="libs/webvr/vr/WebVR.js"></script>
 
 	<script src="libs/webvr/loaders/OBJLoader.js"></script>
+	<script src="libs/webvr/loaders/MTLLoader.js"></script>
 	</head>
 	<body>
 	
@@ -94,7 +95,6 @@
 		
 		//scene.setGravity(new THREE.Vector3( 0, -9.82, 0 ));
 		scene.setGravity(new THREE.Vector3( 0, -9.82, 0 ));
-		//scene.setGravity(new THREE.Vector3( 0, 0, 0 ));
 		
 		scene.addEventListener(
 			'update',
@@ -103,7 +103,7 @@
 			}
 		);
 		
-		camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 10 );
+		camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 100);
 		/*
 		camera = new THREE.PerspectiveCamera(
 			35,
@@ -156,17 +156,18 @@
 				{color : 0x404040
 					, opacity: 0, transparent : true
 				}),
-			.0, // high friction
-			.99 // low restitution
+			.8, // high friction
+			.0 // low restitution
 		);
 		
 		ground = new Physijs.BoxMesh(
 			new THREE.BoxGeometry(10, 1, 10),
 			ground_material,
-			0 // mass
+			0
 		);
 		
 		ground.receiveShadow = true;
+		//ground.position.y = 0.4;
 		scene.add( ground );
 		
 		// relevant dimensions
@@ -176,41 +177,9 @@
 		
 		hipWidth = 0.35
 		
-		
-		/* TODO: TORUS SHAPE FROM THIS MODEL, attach to simulation
-				// see:
-				// https://threejs.org/docs/api/textures/Texture.html
-				// https://solutiondesign.com/blog/-/blogs/webgl-and-three-js-texture-mappi-1/
-				var torusTex = new THREE.TextureLoader().load("hula-tex.png");
-				torusTex.wrapS = THREE.RepeatWrapping;
-				torusTex.wrapT = THREE.RepeatWrapping;
-				torusTex.repeat.set(4,4);
-				
-				var torus = new THREE.Mesh(
-					new THREE.TorusGeometry(
-						1.0 / 2, // radius (in m)
-						1.1 / 100, // diameter of tube
-						16, // no. of radial segments
-						128 // no. of tubular segments
-					),
-					new THREE.MeshBasicMaterial(
-						//{ color: 0xffa3fd }
-						{ map: torusTex }
-					)
-				);
-				
-				//torus.position.y = -3;
-				torus.position.y = 1.1;
-				torus.rotation.x = Math.PI / 2;
-				
-				room.add(torus);
-		
-		*/
-			
-		//var nSegments = 2;
 		var nSegments = 16;
 		
-		var hoopMass = 2;
+		var hoopMass = 0.5;
 		
 		getTorusSegment = function(
 			idx = 0,
@@ -220,7 +189,7 @@
 			) {
 			var s = new Physijs.BoxMesh(
 				new THREE.BoxGeometry(
-					w * 10, w,
+					w * 10, w * 2,
 					l * 2,
 					3, 3, 3
 				),
@@ -228,7 +197,8 @@
 					new THREE.MeshBasicMaterial(
 						{
 							color: 0xffa3fd,
-							opacity: 0.5, transparent : true,
+							opacity: 0., //0.5, //, 
+							transparent : true,
 							wireframe: true
 						}
 					),
@@ -269,7 +239,8 @@
 			)
 		);
 		
-		torusInitialY = 1.;
+		torusInitialY = 2.;
+		
 		torusCenter.mass = hoopMass;
 		torusCenter.position.y = torusInitialY;
 		
@@ -313,19 +284,20 @@
 		cylinder = new Physijs.CapsuleMesh(
 			new THREE.CylinderGeometry(
 				hipWidth / 2, hipWidth / 2,
-				3,
+				4,
 				64
 			),
 			Physijs.createMaterial(
 				new THREE.MeshBasicMaterial(
 					{
 						color: 0xababab,
-						opacity : 0.5,
-						transparent : true
+						opacity : 0, //.5,
+						transparent : true,
+						wireframe: true
 					}
 				),
-				0.6,
-				0.99
+				0.1,
+				0.05
 			)
 		);
 		
@@ -342,6 +314,31 @@
 				.pulse(vel.length(), 100);
 		})
 		
+		plane = new Physijs.BoxMesh(
+			new THREE.BoxGeometry(
+				10, 10, 0.1,
+				30,30,3
+			),
+			Physijs.createMaterial(
+				new THREE.MeshBasicMaterial(
+					{
+						color: 0xababab,
+						opacity: 0, //.5,
+						transparent: true,
+						wireframe: true
+					}
+				),
+				0.6,
+				0.3
+			)
+		)
+		
+		plane.mass = 1;
+		plane.receiveShadows = true;
+		
+		//cylinder.add(plane);
+		
+		scene.add(plane);
 		
 		scene.add(cylinder);
 		
@@ -354,7 +351,7 @@
 				new THREE.MeshBasicMaterial(
 					{
 						color: 0xababab,
-						opacity : 0.5,
+						opacity : 0. // 0.5,
 						transparent : true
 					}
 				),
@@ -402,7 +399,7 @@
 		*/
 		
 		
-	room.add(new THREE.AxisHelper(1));
+	//room.add(new THREE.AxisHelper(1));
 		
 	scene.background = new THREE.Color(0x77cdff);
 		
@@ -429,12 +426,14 @@
 		var controller = object.children[ 0 ];
 		controller.material.map = loader.load( 'onepointfive_texture.png' );
 		controller.material.specularMap = loader.load( 'onepointfive_spec.png' );
+		controller.material.opacity = 0;
+		controller.material.transparent = true;
 
 		controller1.add( object.clone() );
 		controller2.add( object.clone() );
 
 	} );
-		
+	/*	
 	islandObjs = null;		
 		
 	//loader = new THREE.OBJLoader();
@@ -450,7 +449,21 @@
 		object.translateX(-1.4);
 		scene.add(object);
 	})
-	
+	*/
+	var mtlLoader = new THREE.MTLLoader();
+	mtlLoader.setPath("models/obj/")
+	mtlLoader.load('island_with_palms_no_chair.mtl', function(materials) {
+		materials.preload();
+		var objLoader = new THREE.OBJLoader();
+		objLoader.setMaterials(materials);
+		objLoader.load('models/obj/island_with_palms_no_chair.obj', function(object) {
+			object.scale.setScalar(3);
+			object.position.y = -2.7 * 3;
+			object.position.x = -2;
+			object.position.z = -1;
+			scene.add(object);
+		});
+	});
 	/*
 	scene.add(new THREE.Geometry(
 		islandObj, 
@@ -478,6 +491,7 @@
 		render();
 		
 	}
+		
 	function render() {
 		//requestAnimationFrame( render );
 		//renderer.render( scene, camera );
@@ -503,10 +517,18 @@
 		
 				var d = controller1.getWorldDirection();
 		
+				plane.rotateOnAxis(new THREE.Vector3(1,0,0), Math.PI/2);
+				plane.position.copy(p1)
+				plane.setRotationFromEuler(r1);
+				plane.translateOnAxis(new THREE.Vector3(0, 0, -1), 2);
+		
 				cylinder.position.copy(p1)
 				cylinder.setRotationFromEuler(r1);
 				cylinder.rotateOnAxis(new THREE.Vector3(1,0,0), Math.PI/2);
+		
+		
 				//cylinder.translateOnAxis(new THREE.Vector3(0, 0, -1), hipWidth / 2);
+				cylinder.translateOnAxis(new THREE.Vector3(0, 1, 0), 1);
 		
 				/// attempt at quaternion rotation interpolation thing...
 				//q = controller1.getWorldQuaternion().clone();
@@ -528,6 +550,12 @@
 		
 				cylinder.__dirtyPosition = true;
 				cylinder.__dirtyRotation = true;
+		
+				plane.setLinearVelocity(ZERO);
+				plane.setAngularVelocity(ZERO);
+		
+				plane.__dirtyPosition = true;
+				plane.__dirtyRotation = true;
 		
 		
 				visualHulaLoop.position.copy(torusCenter.getWorldPosition());
