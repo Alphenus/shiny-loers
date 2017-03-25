@@ -15,7 +15,7 @@
 	
 	<script type="text/javascript">
 	
-	'use strict';
+	//'use strict';
 	
 	Physijs.scripts.worker = 'libs/physijs_worker.js';
 	Physijs.scripts.ammo = '../libs/ammo.js';
@@ -58,7 +58,8 @@
 			1,
 			1000
 		);
-		camera.position.set( 60, 50, 60 );
+		//camera.position.set( 60, 50, 60 );
+		camera.position.set(10, 15, 10);
 		camera.lookAt( scene.position );
 		scene.add( camera );
 		
@@ -94,12 +95,35 @@
 		*/
 		
 		ground = new Physijs.BoxMesh(
-			new THREE.BoxGeometry(100, 1, 100),
+			new THREE.BoxGeometry(10, 1, 10),
 			ground_material,
 			0 // mass
 		);
 		ground.receiveShadow = true;
 		scene.add( ground );
+		
+		torus = new Physijs.Mesh(
+			new THREE.TorusGeometry(
+				1.0/2,
+				1.1 / 100,
+				16,
+				128
+			),
+			Physijs.createMaterial(
+				new THREE.MeshBasicMaterial(
+					{color: 0xffa3fd}
+				),
+				0.6,
+				0.3
+			)
+		);
+		
+		torus.mass = 1;
+		torus.receiveShadow = true;
+		
+		torus.position.y = 3;
+		
+		scene.add(torus);
 		
 		
 		
