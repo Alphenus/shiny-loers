@@ -2,16 +2,36 @@
 
 <html>
 
-<head>
-	<title>Collisions - Physijs</title>
-	
-	<!--
-	<link rel="stylesheet" type="text/css" href="css/styles.css" />
-	-->
+	<head>
+		<title>hula hoop</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #101010;
+				color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+			a {
+				color: #f00;
+			}
+		</style>
+	<title>hula</title>
 	
 	<script type="text/javascript" src="libs/three.min.js"></script>
 	<script type="text/javascript" src="libs/stats.js"></script>
 	<script type="text/javascript" src="libs/physi.js"></script>
+		
+	<script src="../libs/three.min.js"></script>
+
+	<script src="libs/webvr/controls/VRControls.js"></script>
+	<script src="libs/webvr/effects/VREffect.js"></script>
+	<script src="libs/webvr/vr/ViveController.js"></script>
+	<script src="libs/webvr/vr/WebVR.js"></script>
+
+	<script src="libs/webvr/loaders/OBJLoader.js"></script>
 	
 	<script type="text/javascript">
 	
@@ -30,6 +50,7 @@
 		renderer.shadowMapSoft = true;
 		document.getElementById( 'viewport' ).appendChild( renderer.domElement );
 		
+		/*
 		render_stats = new Stats();
 		render_stats.domElement.style.position = 'absolute';
 		render_stats.domElement.style.top = '0px';
@@ -41,6 +62,7 @@
 		physics_stats.domElement.style.top = '50px';
 		physics_stats.domElement.style.zIndex = 100;
 		document.getElementById( 'viewport' ).appendChild( physics_stats.domElement );
+		*/
 
 		scene = new Physijs.Scene;
 		
@@ -51,7 +73,7 @@
 			'update',
 			function() {
 				scene.simulate( undefined, 1 );
-				physics_stats.update();
+				//physics_stats.update();
 			}
 		);
 		
@@ -212,7 +234,6 @@
 	render = function() {
 		requestAnimationFrame( render );
 		renderer.render( scene, camera );
-		render_stats.update();
 	};
 	
 	window.onload = initScene;
