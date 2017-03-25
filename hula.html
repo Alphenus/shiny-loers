@@ -224,7 +224,7 @@
 					new THREE.MeshBasicMaterial(
 						{
 							color: 0xffa3fd,
-							opacity: 0.5, transparent : true,
+							opacity: 0., transparent : true,
 							wireframe: true
 						}
 					),
@@ -241,6 +241,9 @@
 			s.position.z = Math.cos(theta) * hoopRadius;
 			
 			s.rotateY(theta + Math.PI / 2);
+			
+			s.setCcdMotionThreshold(0.05);
+			s.setCcdSweptSphereRadius(hoopTubeRadius / 5);
 			
 			return s;
 		}
@@ -322,7 +325,7 @@
 		cylinder.mass = 1;
 		cylinder.receiveShadow = true;
 		
-		cylinder.setCcdMotionThreshold(0.5);
+		cylinder.setCcdMotionThreshold(0.05);
 		cylinder.setCcdSweptSphereRadius(0.05);
 		
 		
@@ -462,7 +465,7 @@
 				cylinder.position.copy(p1)
 				cylinder.setRotationFromEuler(r1);
 				cylinder.rotateOnAxis(new THREE.Vector3(1,0,0), Math.PI/2);
-				cylinder.translateOnAxis(new THREE.Vector3(0, 0, -1), hipWidth / 2);
+				//cylinder.translateOnAxis(new THREE.Vector3(0, 0, -1), hipWidth / 2);
 		
 				cylinder.setLinearVelocity(ZERO);
 				cylinder.setAngularVelocity(ZERO);
