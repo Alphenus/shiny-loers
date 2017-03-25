@@ -32,23 +32,49 @@
 	<script src="libs/webvr/vr/WebVR.js"></script>
 
 	<script src="libs/webvr/loaders/OBJLoader.js"></script>
+	</head>
+	<body>
 	
 	<script type="text/javascript">
 	
 	//'use strict';
+		
+	
+	if ( WEBVR.isAvailable() === false ) {
+		document.body.appendChild( WEBVR.getMessage() );
+	}
+		
+	var clock = new THREE.Clock();
 	
 	Physijs.scripts.worker = 'libs/physijs_worker.js';
 	Physijs.scripts.ammo = '../libs/ammo.js';
 	
-	var initScene, render, _boxes = [], spawnBox, loader,
-		renderer, render_stats, physics_stats, scene, ground_material, ground, light, camera;
+	var initScene; 
+	var loader;
+	var container;
+	var ground_material, ground, light; 
+	var camera, scene, render, renderer;
+	var effect, controls;
+	var controller1, controller2;
+		
+		
+	initScene();
+	animate();
 	
-	initScene = function() {
+	function initScene() {
+		
+		container = document.createElement( 'div' );
+		document.body.appendChild( container );
+		
 		renderer = new THREE.WebGLRenderer({ antialias: true });
+		//renderer.setSize( window.innerWidth, window.innerHeight );
+		//renderer.shadowMap.enabled = true;
+		//renderer.shadowMapSoft = true;
+		renderer.setClearColor( 0x505050 );
+		renderer.setPixelRatio( window.devicePixelRatio );
 		renderer.setSize( window.innerWidth, window.innerHeight );
-		renderer.shadowMap.enabled = true;
-		renderer.shadowMapSoft = true;
-		document.getElementById( 'viewport' ).appendChild( renderer.domElement );
+		renderer.sortObjects = false;
+		container.appendChild( renderer.domElement );
 		
 		/*
 		render_stats = new Stats();
@@ -73,22 +99,23 @@
 			'update',
 			function() {
 				scene.simulate( undefined, 1 );
-				//physics_stats.update();
 			}
 		);
 		
+		camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 10 );
+		/*
 		camera = new THREE.PerspectiveCamera(
 			35,
 			window.innerWidth / window.innerHeight,
 			1,
 			1000
 		);
-		//camera.position.set( 60, 50, 60 );
-		camera.position.set(5, 1, 5);
-		camera.lookAt( scene.position );
+		*/
+		
 		scene.add( camera );
 		
-		// Light
+		// Light -- ignoring for now
+		/*
 		light = new THREE.DirectionalLight( 0xFFFFFF );
 		light.position.set( 20, 40, -15 );
 		light.target.position.copy( scene.position );
@@ -103,10 +130,24 @@
 		light.shadowMapWidth = light.shadowMapHeight = 2048;
 		light.shadowDarkness = .7;
 		scene.add( light );
+		*/
 
 		// Loader
 		loader = new THREE.TextureLoader();
 		
+		room = new THREE.Mesh(
+			new THREE.BoxGeometry( 6, 6, 6, 8, 8, 8 )
+		);
+		
+		scene.add( room );
+		
+		//TODO: figure out lighting ...
+		scene.add( new THREE.HemisphereLight( 0x606060, 0x404040 ) );
+		
+		var light = new THREE.DirectionalLight( 0xffffff );
+		light.position.set( 1, 1, 1 ).normalize();
+		scene.add( light );
+	
 		// Ground
 		ground_material = Physijs.createMaterial(
 			//new THREE.MeshLambertMaterial({ map: loader.load( 'images/rocks.jpg' ) }),
@@ -114,22 +155,48 @@
 			.8, // high friction
 			.3 // low restitution
 		);
-		/*
-		ground_material.map.wrapS = ground_material.map.wrapT = THREE.RepeatWrapping;
-		ground_material.map.repeat.set( 3, 3 );
-		*/
 		
 		ground = new Physijs.BoxMesh(
 			new THREE.BoxGeometry(10, 1, 10),
 			ground_material,
 			0 // mass
 		);
+		
 		ground.receiveShadow = true;
 		scene.add( ground );
 		
 		hoopRadius = 1.0 / 2; // in m
 		hoopTubeRadius = 1.1 / 100 / 2;
 		
+		/* TODO: TORUS SHAPE FROM THIS MODEL, attach to simulation
+				// see:
+				// https://threejs.org/docs/api/textures/Texture.html
+				// https://solutiondesign.com/blog/-/blogs/webgl-and-three-js-texture-mappi-1/
+				var torusTex = new THREE.TextureLoader().load("hula-tex.png");
+				torusTex.wrapS = THREE.RepeatWrapping;
+				torusTex.wrapT = THREE.RepeatWrapping;
+				torusTex.repeat.set(4,4);
+				
+				var torus = new THREE.Mesh(
+					new THREE.TorusGeometry(
+						1.0 / 2, // radius (in m)
+						1.1 / 100, // diameter of tube
+						16, // no. of radial segments
+						128 // no. of tubular segments
+					),
+					new THREE.MeshBasicMaterial(
+						//{ color: 0xffa3fd }
+						{ map: torusTex }
+					)
+				);
+				
+				//torus.position.y = -3;
+				torus.position.y = 1.1;
+				torus.rotation.x = Math.PI / 2;
+				
+				room.add(torus);
+		
+		*/
 			
 		//var nSegments = 2;
 		var nSegments = 16;
@@ -185,21 +252,16 @@
 		);
 		
 		torusCenter.mass = 1;
-		//torusCenter.position.x = - hoopRadius;
 		torusCenter.position.y = 2;
 		
 		torusCenter.rotateX(0.5);
-		//torusCenter.applyForce = function() {return true};
-		//torusCenter.applyCentralForce = function() {return true};
-		//torusCenter.applyImpulse = function() {return true};
 
 		for(var i = 0; i < nSegments; i++) {
 			torusCenter.add(getTorusSegment(idx = i));
 		}
 		
+		//room.add(torusCenter);
 		scene.add(torusCenter);
-		
-		//scene.add(torus2);
 		
 		cylinder = new Physijs.CylinderMesh(
 			new THREE.CylinderGeometry(
@@ -225,28 +287,134 @@
 		
 		scene.add(cylinder);
 		
-		//spawnBox();
+		// vive controller blocks // TODO
+		/*
+				// blocks for the cnotrollers ('hips')
+				block1Pivot = new THREE.Group();
+				block2Pivot = new THREE.Group();
+				
+				block1 = new THREE.Mesh(
+					new THREE.BoxGeometry(
+						0.1, 0.5, 0.05
+					),
+					new THREE.MeshBasicMaterial( {color: 0xababab , opacity : 0.5, transparent: true})
+				) 
+				block2 = new THREE.Mesh(
+					new THREE.BoxGeometry(
+						0.1, 0.5, 0.05
+					),
+					new THREE.MeshBasicMaterial( {color: 0xababab , opacity : 0.5, transparent: true})
+				) 
+				
+				block1.rotateX(Math.PI / 2);
+				block2.rotateX(Math.PI / 2);
+				
+				room.add(block1Pivot);
+				room.add(block2Pivot);
+				
+				block1Pivot.add(block1);
+				block2Pivot.add(block2);
+		*/
+		
+		
+	room.add(new THREE.AxisHelper(1));
+		
+	// VR STUFF
+		
+	controls = new THREE.VRControls( camera );
+	controls.standing = true;
+
+	controller1 = new THREE.ViveController( 0 );
+	controller1.standingMatrix = controls.getStandingMatrix();
+	scene.add( controller1 );
+
+	controller2 = new THREE.ViveController( 1 );
+	controller2.standingMatrix = controls.getStandingMatrix();
+	scene.add( controller2 );
+		
+	var loader = new THREE.OBJLoader();
+	loader.setPath( 'models/obj/vive-controller/' );
+	loader.load( 'vr_controller_vive_1_5.obj', function ( object ) {
+
+		var loader = new THREE.TextureLoader();
+		loader.setPath( 'models/obj/vive-controller/' );
+
+		var controller = object.children[ 0 ];
+		controller.material.map = loader.load( 'onepointfive_texture.png' );
+		controller.material.specularMap = loader.load( 'onepointfive_spec.png' );
+
+		controller1.add( object.clone() );
+		controller2.add( object.clone() );
+
+	} );
+
+	effect = new THREE.VREffect( renderer );
+
+	if ( WEBVR.isAvailable() === true ) {
+
+		var b = WEBVR.getButton( effect );
+		document.body.appendChild( b );
+		
+	}
+
+		window.addEventListener( 'resize', onWindowResize, false );
 		
 		requestAnimationFrame( render );
 		scene.simulate();
 	};
 	
-	render = function() {
-		requestAnimationFrame( render );
-		renderer.render( scene, camera );
+	function animate() {
+		effect.requestAnimationFrame( animate );
+		
+		
+		render();
+		
+	}
+	function render() {
+		//requestAnimationFrame( render );
+		//renderer.render( scene, camera );
+		
+				//scene.simulate();
+		
+				var delta = clock.getDelta() * 60;
+
+				controller1.update();
+				controller2.update();
+
+				controls.update();
+				
+				var p1 = controller1.getWorldPosition();
+				var r1 = controller1.getWorldRotation();
+				
+				var p2 = controller2.getWorldPosition();
+				var r2 = controller2.getWorldRotation();
+				
+		/*
+				block1Pivot.position.copy(p1);
+				block2Pivot.position.copy(p2);
+				
+				block1Pivot.setRotationFromEuler(r1);
+				block2Pivot.setRotationFromEuler(r2);
+				
+				*/
+				effect.render( scene, camera );
 	};
+	function onWindowResize() {
+
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+
+		effect.setSize( window.innerWidth, window.innerHeight );
+
+	}
+		
+
 	
-	window.onload = initScene;
+	
+	//window.onload = initScene;
 	
 	</script>
-</head>
 
-<body>
-	<div id="heading">
-		<h1>Collisions</h1>
-		<p>Demonstrating the collision callback</p>
-	</div>
-	<div id="viewport"></div>
 </body>
 
 </html>
