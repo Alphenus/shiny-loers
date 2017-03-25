@@ -90,10 +90,11 @@
 		document.getElementById( 'viewport' ).appendChild( physics_stats.domElement );
 		*/
 
-		scene = new Physijs.Scene;
+		scene = new Physijs.Scene({ fixedTimeStep: 1. / 200});
 		
 		//scene.setGravity(new THREE.Vector3( 0, -9.82, 0 ));
 		scene.setGravity(new THREE.Vector3( 0, -9.82, 0 ));
+		//scene.setGravity(new THREE.Vector3( 0, 0, 0 ));
 		
 		scene.addEventListener(
 			'update',
@@ -151,9 +152,12 @@
 		// Ground
 		ground_material = Physijs.createMaterial(
 			//new THREE.MeshLambertMaterial({ map: loader.load( 'images/rocks.jpg' ) }),
-			new THREE.MeshBasicMaterial({color : 0x404040}),
-			.8, // high friction
-			.3 // low restitution
+			new THREE.MeshBasicMaterial(
+				{color : 0x404040
+					, opacity: 0, transparent : true
+				}),
+			.0, // high friction
+			.99 // low restitution
 		);
 		
 		ground = new Physijs.BoxMesh(
@@ -206,25 +210,25 @@
 		//var nSegments = 2;
 		var nSegments = 16;
 		
-		var hoopMass = 1;
+		var hoopMass = 2;
 		
 		getTorusSegment = function(
 			idx = 0,
 			l = Math.PI * 2 * hoopRadius / nSegments,
-			w = hoopTubeRadius * 2, 
+			w = hoopTubeRadius * 5, 
 			m = hoopMass / nSegments
 			) {
 			var s = new Physijs.BoxMesh(
 				new THREE.BoxGeometry(
-					w, w,
-					l,
+					w * 10, w,
+					l * 2,
 					3, 3, 3
 				),
 				Physijs.createMaterial(
 					new THREE.MeshBasicMaterial(
 						{
 							color: 0xffa3fd,
-							opacity: 0., transparent : true,
+							opacity: 0.5, transparent : true,
 							wireframe: true
 						}
 					),
@@ -237,8 +241,9 @@
 			
 			var theta = idx * Math.PI * 2 / nSegments + Math.PI / 2;
 			
-			s.position.x = Math.sin(theta) * hoopRadius;
-			s.position.z = Math.cos(theta) * hoopRadius;
+			var radiusSacle = 1.2;
+			s.position.x = Math.sin(theta) * hoopRadius * radiusSacle;
+			s.position.z = Math.cos(theta) * hoopRadius * radiusSacle;
 			
 			s.rotateY(theta + Math.PI / 2);
 			
@@ -264,8 +269,9 @@
 			)
 		);
 		
-		torusCenter.mass = 2;
-		torusCenter.position.y = 2;
+		torusInitialY = 1.;
+		torusCenter.mass = hoopMass;
+		torusCenter.position.y = torusInitialY;
 		
 		hulaTex = new THREE.TextureLoader().load("hula-tex.png");
 		hulaTex.wrapS = THREE.RepeatWrapping;
@@ -286,6 +292,7 @@
 				);
 				
 		visualHulaLoop.geometry.rotateX(Math.PI / 2);
+		visualHulaLoop.receiveShadows = true;
 		room.add(visualHulaLoop);
 		
 		torusCenter.rotateX(0.5);
@@ -303,7 +310,7 @@
 		)
 		*/
 
-		cylinder = new Physijs.CylinderMesh(
+		cylinder = new Physijs.CapsuleMesh(
 			new THREE.CylinderGeometry(
 				hipWidth / 2, hipWidth / 2,
 				3,
@@ -313,7 +320,7 @@
 				new THREE.MeshBasicMaterial(
 					{
 						color: 0xababab,
-						opacity : 0.,
+						opacity : 0.5,
 						transparent : true
 					}
 				),
@@ -327,6 +334,13 @@
 		
 		cylinder.setCcdMotionThreshold(0.05);
 		cylinder.setCcdSweptSphereRadius(0.05);
+		
+		cylinder.addEventListener("collision", function(other, vel, omega) {
+			
+			controller1.getGamepad()
+				.hapticActuators[0]
+				.pulse(vel.length(), 100);
+		})
 		
 		
 		scene.add(cylinder);
@@ -390,6 +404,8 @@
 		
 	room.add(new THREE.AxisHelper(1));
 		
+	scene.background = new THREE.Color(0x77cdff);
+		
 	// VR STUFF
 		
 	controls = new THREE.VRControls( camera );
@@ -418,6 +434,29 @@
 		controller2.add( object.clone() );
 
 	} );
+		
+	islandObjs = null;		
+		
+	//loader = new THREE.OBJLoader();
+	//loader.setPath("models/obj/");
+	var loader = new THREE.OBJLoader();
+	loader.load("models/obj/island_violated.obj", function( object ) {
+		//islandObj = object.children[0];
+		//seaObj = object.children[1];
+		
+		//islandObjs = object.clone();
+		
+		object.translateY(-2.7);
+		object.translateX(-1.4);
+		scene.add(object);
+	})
+	
+	/*
+	scene.add(new THREE.Geometry(
+		islandObj, 
+		new THREE.MeshBasicMaterial({color: 0xffe28c})));
+	//scene.add(seaObj);
+	*/
 
 	effect = new THREE.VREffect( renderer );
 
@@ -462,10 +501,27 @@
 				var p2 = controller2.getWorldPosition();
 				var r2 = controller2.getWorldRotation();
 		
+				var d = controller1.getWorldDirection();
+		
 				cylinder.position.copy(p1)
 				cylinder.setRotationFromEuler(r1);
 				cylinder.rotateOnAxis(new THREE.Vector3(1,0,0), Math.PI/2);
 				//cylinder.translateOnAxis(new THREE.Vector3(0, 0, -1), hipWidth / 2);
+		
+				/// attempt at quaternion rotation interpolation thing...
+				//q = controller1.getWorldQuaternion().clone();
+		
+				/*
+				qv = (new THREE.Quaternion()).setFromUnitVectors(
+					new THREE.Vector3(0,0,1),
+					new THREE.Vector3(1,0,0)
+				)
+				
+				q.slerp(qv, 0.5);
+		
+				cylinder.setRotationFromQuaternion(q);
+				*/
+				
 		
 				cylinder.setLinearVelocity(ZERO);
 				cylinder.setAngularVelocity(ZERO);
@@ -513,7 +569,7 @@
 	function resetHoopPosition() {
 		
 		torusCenter.position.copy(ZERO);
-		torusCenter.position.y = 2;
+		torusCenter.position.y = torusInitialY;
 		
 		torusCenter.rotation.x = 0;
 		torusCenter.rotation.y = 0;
